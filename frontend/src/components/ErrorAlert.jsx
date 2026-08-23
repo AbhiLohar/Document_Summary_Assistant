@@ -19,24 +19,24 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
     errorLower.includes('authentication');
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 shadow-sm animate-in fade-in duration-200">
+    <div className="w-full max-w-3xl mx-auto p-4 sm:p-5 rounded-2xl bg-rose-50/90 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 shadow-subtle animate-fade-in">
       <div className="flex items-start justify-between gap-3">
         
         <div className="flex items-start space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-            {isRateLimit ? <Clock className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+            {isRateLimit ? <Clock className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           </div>
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-rose-900 dark:text-rose-200">
-              {isRateLimit ? 'Gemini API Rate Limit / Quota Exceeded' : 'Processing Encountered an Issue'}
+            <h4 className="text-xs sm:text-sm font-semibold text-rose-950 dark:text-rose-100">
+              {isRateLimit ? 'Gemini API Rate Limit / Quota Exceeded' : 'Unable to Process Document'}
             </h4>
-            <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">
+            <p className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
               {error}
             </p>
 
             {isRateLimit && (
-              <p className="text-[11px] text-rose-600 dark:text-rose-400 pt-0.5">
-                💡 <strong>Tip:</strong> Google AI Studio free tier limits requests to 15/minute. Wait ~20–30 seconds and click <em>Try Again</em>, or enter another free API key below.
+              <p className="text-[11px] text-rose-700 dark:text-rose-400 pt-0.5">
+                💡 <strong>Tip:</strong> Free tier limits requests to 15/min. Please wait ~20–30 seconds and click <em>Try Again</em>, or switch to a new free API key.
               </p>
             )}
 
@@ -46,10 +46,10 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
                 <button
                   type="button"
                   onClick={onOpenApiKeyModal}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-colors"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-700 hover:bg-rose-800 text-white shadow-subtle transition-colors"
                 >
                   <Key className="w-3.5 h-3.5" />
-                  <span>Configure Gemini API Key</span>
+                  <span>Configure API Key</span>
                 </button>
               )}
 
@@ -57,7 +57,7 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/60 dark:hover:bg-rose-800/80 text-rose-800 dark:text-rose-200 transition-colors"
+                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/60 dark:hover:bg-rose-800 text-rose-900 dark:text-rose-200 transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5 mr-1" />
                   <span>Try Again</span>
@@ -69,9 +69,9 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
                   href="https://aistudio.google.com/app/apikey"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-700 dark:text-rose-300 hover:underline"
+                  className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs font-medium text-rose-800 dark:text-rose-300 hover:underline"
                 >
-                  <span>Get New Free Key</span>
+                  <span>Get New Key</span>
                   <ExternalLink className="w-3 h-3 ml-0.5" />
                 </a>
               )}

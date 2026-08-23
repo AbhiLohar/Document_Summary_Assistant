@@ -23,8 +23,10 @@ import {
 export default function App() {
   // Theme state
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' ||
-      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return (
+      localStorage.getItem('theme') === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
   });
 
   useEffect(() => {
@@ -94,12 +96,12 @@ export default function App() {
 
       if (extractRes.metadata?.is_scanned) {
         setCurrentStage('ocr');
-        await new Promise((r) => setTimeout(r, 400));
+        await new Promise((r) => setTimeout(r, 350));
       }
 
       // Step 2: AI Document Analysis
       setCurrentStage('analyze');
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 350));
       setCurrentStage('summarize');
 
       const analysis = await summarizeDocument({
@@ -111,11 +113,11 @@ export default function App() {
       setAnalysisResult(analysis);
       setCurrentStage('complete');
 
-      // Trigger celebratory confetti
+      // Subtle celebratory confetti
       confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.8 },
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.85 },
       });
     } catch (err) {
       console.error('Processing error:', err);
@@ -156,7 +158,7 @@ export default function App() {
     }
   };
 
-  // Sample Documents Handler — sends text directly to summarize (no file upload needed)
+  // Sample Documents Handler
   const handleSelectSample = async (sampleType) => {
     const samples = {
       ai_research: {
@@ -239,10 +241,9 @@ Next Steps:
     setAnalysisResult(null);
 
     try {
-      // Simulate upload + extraction stages visually
       setUploadProgress(100);
       setCurrentStage('extract');
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 400));
 
       setExtractedData({
         success: true,
@@ -251,9 +252,8 @@ Next Steps:
         message: 'Sample text loaded.',
       });
 
-      // Move to AI analysis
       setCurrentStage('analyze');
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 350));
       setCurrentStage('summarize');
 
       const analysis = await summarizeDocument({
@@ -266,9 +266,9 @@ Next Steps:
       setCurrentStage('complete');
 
       confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.8 },
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.85 },
       });
     } catch (err) {
       console.error('Sample processing error:', err);
@@ -296,7 +296,7 @@ Next Steps:
   const isLoading = ['upload', 'extract', 'ocr', 'analyze', 'summarize'].includes(currentStage);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#0c0d12] text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       
       {/* Navigation Header */}
       <Header
@@ -305,27 +305,14 @@ Next Steps:
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         hasApiKey={hasApiKey}
         backendHealth={backendHealth}
+        onNewDocument={handleReset}
+        isComplete={currentStage === 'complete'}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* Main Content Shell */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
         
-        {/* Hero Section (When in Upload / Idle state) */}
-        {currentStage === 'idle' && (
-          <div className="text-center space-y-3 max-w-3xl mx-auto pt-2 pb-4">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Transform Complex Documents into{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-teal-400">
-                Actionable Intelligence
-              </span>
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-              Upload PDF documents or scanned images. Our pipeline extracts high-fidelity text, performs OCR, and leverages Google Gemini AI to generate executive summaries, key takeaways, dynamic outlines, and editorial suggestions.
-            </p>
-          </div>
-        )}
-
-        {/* Global Error Banner */}
+        {/* Global Error Alert */}
         {errorMessage && (
           <ErrorAlert
             error={errorMessage}
@@ -335,7 +322,7 @@ Next Steps:
           />
         )}
 
-        {/* Upload View */}
+        {/* Upload View (Primary Entry) */}
         {(currentStage === 'idle' || currentStage === 'error') && (
           <FileUpload
             onFileSelected={handleProcessFile}
@@ -344,7 +331,7 @@ Next Steps:
           />
         )}
 
-        {/* Multi-stage Progress Stepper */}
+        {/* Multi-stage Processing Stepper */}
         {isLoading && (
           <ProcessingProgress
             currentStage={currentStage}
@@ -353,11 +340,11 @@ Next Steps:
           />
         )}
 
-        {/* Results Dashboard */}
+        {/* Document Workspace Results View */}
         {currentStage === 'complete' && analysisResult && (
-          <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="space-y-6 animate-fade-in">
             
-            {/* Top Document Metadata Bar */}
+            {/* Document Header & Identity */}
             <DocumentMeta
               metadata={analysisResult.metadata}
               onReset={handleReset}
@@ -371,23 +358,23 @@ Next Steps:
               isRegenerating={isRegenerating}
             />
 
-            {/* AI Summary Card */}
+            {/* AI Summary Centerpiece */}
             <SummaryCard
               summary={analysisResult.summary}
               summaryLength={analysisResult.summary_length}
               isHierarchical={analysisResult.is_hierarchical}
             />
 
-            {/* Key Points Bullet List */}
+            {/* Key Takeaways */}
             <KeyPointsCard keyPoints={analysisResult.key_points} />
 
-            {/* Main Ideas & Outlines */}
+            {/* Main Ideas & Section Breakdown */}
             <MainIdeasCard mainIdeas={analysisResult.main_ideas} />
 
-            {/* Improvement Suggestions */}
+            {/* Actionable Editorial Feedback */}
             <ImprovementSuggestionsCard suggestions={analysisResult.improvement_suggestions} />
 
-            {/* Raw Extracted Text Viewer */}
+            {/* Collapsible Raw Extracted Text Drawer */}
             <ExtractedTextViewer
               extractedText={analysisResult.extracted_text}
               metadata={analysisResult.metadata}
@@ -412,10 +399,10 @@ Next Steps:
         data={analysisResult}
       />
 
-      {/* Footer */}
-      <footer className="w-full border-t border-slate-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+      {/* Minimalist Footer */}
+      <footer className="w-full border-t border-zinc-200/80 dark:border-zinc-800/80 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400 bg-white/50 dark:bg-zinc-900/50">
         <p>
-          Document Summary Assistant • Production AI Architecture with PyMuPDF, Tesseract OCR & Google Gemini
+          Document Intelligence Workspace • Powered by PyMuPDF, Tesseract OCR & Google Gemini
         </p>
       </footer>
 

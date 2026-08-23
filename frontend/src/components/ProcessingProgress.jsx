@@ -1,45 +1,45 @@
 import React from 'react';
-import { Loader2, CheckCircle2, FileText, Scan, BrainCircuit, Sparkles, Layers } from 'lucide-react';
+import { Check, Loader2, FileText, Scan, Sparkles, Brain, Layers } from 'lucide-react';
 
 export default function ProcessingProgress({ currentStage, uploadProgress = 0, isScanned = false }) {
   const steps = [
     {
       id: 'upload',
-      name: 'Uploading Document',
-      desc: uploadProgress < 100 ? `${uploadProgress}% uploaded` : 'Upload completed',
+      name: 'Document uploaded',
+      desc: uploadProgress < 100 ? `${uploadProgress}% uploaded` : 'File received',
       icon: FileText,
     },
     {
       id: 'extract',
-      name: 'Extracting Content',
-      desc: 'Parsing text structure via PyMuPDF',
+      name: 'Extracting text',
+      desc: 'Parsing layout and structure via PyMuPDF',
       icon: Layers,
     },
     ...(isScanned
       ? [
           {
             id: 'ocr',
-            name: 'Running OCR Engine',
-            desc: 'Detecting text from scanned pages / image',
+            name: 'Running OCR engine',
+            desc: 'Detecting text from scanned page layers',
             icon: Scan,
           },
         ]
       : []),
     {
       id: 'analyze',
-      name: 'AI Document Understanding',
-      desc: 'Contextual analysis and section breakdown',
-      icon: BrainCircuit,
+      name: 'Analyzing document',
+      desc: 'Contextual semantics & hierarchical outline',
+      icon: Brain,
     },
     {
       id: 'summarize',
-      name: 'Synthesizing Results',
-      desc: 'Crafting summary, key points & recommendations',
+      name: 'Generating summary',
+      desc: 'Synthesizing key points & recommendations',
       icon: Sparkles,
     },
   ];
 
-  const getStepStatus = (stepId, index) => {
+  const getStepStatus = (stepId) => {
     const stageOrder = ['upload', 'extract', ...(isScanned ? ['ocr'] : []), 'analyze', 'summarize', 'complete'];
     const currentIndex = stageOrder.indexOf(currentStage);
     const thisIndex = stageOrder.indexOf(stepId);
@@ -54,95 +54,87 @@ export default function ProcessingProgress({ currentStage, uploadProgress = 0, i
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6 animate-in fade-in duration-300">
-      <div className="text-center space-y-1.5">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 mb-2 shadow-inner">
-          <Loader2 className="w-6 h-6 animate-spin" />
+    <div className="w-full max-w-xl mx-auto p-6 sm:p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-card space-y-6 animate-fade-in">
+      
+      {/* Header */}
+      <div className="flex items-center space-x-3 pb-2 border-b border-zinc-100 dark:border-zinc-800/80">
+        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center flex-shrink-0">
+          <Loader2 className="w-4 h-4 animate-spin text-brand-600 dark:text-brand-400" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-          Processing Your Document
-        </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Please wait a moment while we extract, analyze, and summarize the content
-        </p>
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+            Processing Document
+          </h3>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Analyzing content and synthesizing intelligence
+          </p>
+        </div>
       </div>
 
       {/* Upload percentage bar */}
       {currentStage === 'upload' && (
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-slate-500 font-medium">
-            <span>Uploading...</span>
+          <div className="flex justify-between text-xs text-zinc-500 font-mono">
+            <span>Uploading</span>
             <span>{uploadProgress}%</span>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-brand-500 h-2 rounded-full transition-all duration-300 ease-out"
+              className="bg-zinc-900 dark:bg-white h-1.5 rounded-full transition-all duration-200 ease-out"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Progress Steps list */}
-      <div className="space-y-3 pt-2">
-        {steps.map((step, idx) => {
-          const status = getStepStatus(step.id, idx);
-          const Icon = step.icon;
+      {/* Timeline Steps */}
+      <div className="space-y-3.5 pt-1">
+        {steps.map((step) => {
+          const status = getStepStatus(step.id);
 
           return (
             <div
               key={step.id}
-              className={`flex items-center space-x-3.5 p-3 rounded-2xl transition-all duration-200 ${
-                status === 'current'
-                  ? 'bg-brand-50/80 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800/80 shadow-sm'
-                  : status === 'completed'
-                  ? 'bg-slate-50/60 dark:bg-slate-800/30 text-slate-500'
-                  : 'opacity-40'
+              className={`flex items-start space-x-3.5 transition-opacity duration-200 ${
+                status === 'upcoming' ? 'opacity-35' : 'opacity-100'
               }`}
             >
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                  status === 'completed'
-                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400'
-                    : status === 'current'
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-500/30'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                }`}
-              >
+              {/* Status Indicator Icon */}
+              <div className="mt-0.5 flex-shrink-0">
                 {status === 'completed' ? (
-                  <CheckCircle2 className="w-5 h-5" />
+                  <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </div>
                 ) : status === 'current' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-brand-600 dark:border-brand-400 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-brand-600 dark:bg-brand-400 animate-ping" />
+                  </div>
                 ) : (
-                  <Icon className="w-4 h-4" />
+                  <div className="w-5 h-5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800" />
                 )}
               </div>
 
+              {/* Text info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <p
-                    className={`text-sm font-semibold truncate ${
+                    className={`text-xs sm:text-[13px] font-medium truncate ${
                       status === 'current'
-                        ? 'text-brand-950 dark:text-brand-200'
+                        ? 'text-zinc-950 dark:text-white font-semibold'
                         : status === 'completed'
-                        ? 'text-slate-800 dark:text-slate-200'
-                        : 'text-slate-400'
+                        ? 'text-zinc-800 dark:text-zinc-200'
+                        : 'text-zinc-400 dark:text-zinc-500'
                     }`}
                   >
                     {step.name}
                   </p>
                   {status === 'current' && (
-                    <span className="text-[11px] font-medium text-brand-600 dark:text-brand-400 animate-pulse">
-                      In progress...
-                    </span>
-                  )}
-                  {status === 'completed' && (
-                    <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                      Done
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                      In Progress
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                   {step.desc}
                 </p>
               </div>
@@ -150,6 +142,7 @@ export default function ProcessingProgress({ currentStage, uploadProgress = 0, i
           );
         })}
       </div>
+
     </div>
   );
 }

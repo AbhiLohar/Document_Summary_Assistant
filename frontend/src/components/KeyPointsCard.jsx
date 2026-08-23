@@ -14,20 +14,20 @@ export default function KeyPointsCard({ keyPoints = [] }) {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-card space-y-4">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-            <ListOrdered className="w-4 h-4" />
+          <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center">
+            <ListOrdered className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Key Points
+            <h3 className="text-[15px] font-semibold text-zinc-950 dark:text-white">
+              Key Takeaways
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {keyPoints.length} core takeaways extracted from document
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {keyPoints.length} core findings extracted from document
             </span>
           </div>
         </div>
@@ -35,12 +35,12 @@ export default function KeyPointsCard({ keyPoints = [] }) {
         <button
           type="button"
           onClick={handleCopyAll}
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-subtle"
         >
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
             </>
           ) : (
             <>
@@ -53,19 +53,22 @@ export default function KeyPointsCard({ keyPoints = [] }) {
 
       {/* Points list */}
       <div className="grid grid-cols-1 gap-2.5 pt-1">
-        {keyPoints.map((point, index) => (
-          <div
-            key={index}
-            className="flex items-start space-x-3.5 p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800/80 hover:border-brand-300 dark:hover:border-brand-700 transition-colors"
-          >
-            <span className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
-              {index + 1}
-            </span>
-            <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
-              {point}
-            </p>
-          </div>
-        ))}
+        {keyPoints.map((point, index) => {
+          const numStr = String(index + 1).padStart(2, '0');
+          return (
+            <div
+              key={index}
+              className="flex items-start space-x-3.5 p-3.5 rounded-xl bg-zinc-50/70 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-150"
+            >
+              <span className="font-mono text-xs font-semibold text-zinc-400 dark:text-zinc-500 flex-shrink-0 mt-0.5 select-none">
+                {numStr}
+              </span>
+              <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                {point}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
     </div>

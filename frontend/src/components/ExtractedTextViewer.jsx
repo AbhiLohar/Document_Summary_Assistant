@@ -6,8 +6,6 @@ import {
   Copy,
   Check,
   Search,
-  Hash,
-  Layers,
 } from 'lucide-react';
 
 export default function ExtractedTextViewer({ extractedText = '', metadata = null }) {
@@ -26,10 +24,13 @@ export default function ExtractedTextViewer({ extractedText = '', metadata = nul
     return extractedText ? extractedText.split('\n').length : 0;
   }, [extractedText]);
 
+  const wordCount = useMemo(() => {
+    return metadata?.word_count || (extractedText ? extractedText.split(/\s+/).filter(Boolean).length : 0);
+  }, [extractedText, metadata]);
+
   const filteredText = useMemo(() => {
-    if (!searchTerm.trim()) return extractedText;
     return extractedText;
-  }, [extractedText, searchTerm]);
+  }, [extractedText]);
 
   const matchCount = useMemo(() => {
     if (!searchTerm.trim() || !extractedText) return 0;
@@ -41,60 +42,58 @@ export default function ExtractedTextViewer({ extractedText = '', metadata = nul
   if (!extractedText) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-card overflow-hidden">
       
       {/* Toggle Header */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors select-none"
+        className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors select-none"
       >
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
-            <FileCode2 className="w-4 h-4" />
+          <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center">
+            <FileCode2 className="w-3.5 h-3.5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Raw Extracted Text
+              <h3 className="text-xs sm:text-sm font-semibold text-zinc-950 dark:text-white">
+                Extracted Document Text
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                {metadata?.extraction_method || 'Parser Output'}
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                {wordCount.toLocaleString()} words
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Verify the exact OCR / PDF text before AI processing • {lineCount} lines • {extractedText.length.toLocaleString()} characters
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Verify raw text parsed from {metadata?.file_type?.toUpperCase() || 'document'} • {lineCount} lines
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            type="button"
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          >
-            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+        >
+          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
       </div>
 
-      {/* Expandable Content Area */}
+      {/* Expandable Body */}
       {isOpen && (
-        <div className="p-6 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        <div className="p-6 pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
           
-          {/* Controls Bar: Search & Copy */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pb-2">
+          {/* Controls Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pb-1">
             <div className="relative w-full sm:w-72">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search within extracted text..."
-                className="w-full pl-9 pr-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="Search raw extracted text..."
+                className="w-full pl-9 pr-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
               />
               {searchTerm && (
-                <span className="absolute right-3 top-2 text-[11px] text-slate-400">
-                  {matchCount} match{matchCount !== 1 ? 'es' : ''}
+                <span className="absolute right-3 top-2 text-[10px] text-zinc-400 font-mono">
+                  {matchCount} found
                 </span>
               )}
             </div>
@@ -102,12 +101,12 @@ export default function ExtractedTextViewer({ extractedText = '', metadata = nul
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs ml-auto"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-subtle ml-auto"
             >
               {copied ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
                 </>
               ) : (
                 <>
@@ -118,8 +117,8 @@ export default function ExtractedTextViewer({ extractedText = '', metadata = nul
             </button>
           </div>
 
-          {/* Scrollable Preformatted Text Box */}
-          <div className="relative rounded-2xl bg-slate-900 text-slate-100 p-4 font-mono text-xs max-h-96 overflow-y-auto overflow-x-auto shadow-inner border border-slate-800 leading-relaxed select-text">
+          {/* Scrollable Text Viewer */}
+          <div className="rounded-xl bg-zinc-950 text-zinc-200 p-4 font-mono text-xs max-h-80 overflow-y-auto overflow-x-auto border border-zinc-800 leading-relaxed select-text">
             <pre className="whitespace-pre-wrap font-mono">
               {filteredText}
             </pre>
