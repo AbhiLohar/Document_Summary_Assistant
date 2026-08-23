@@ -16,6 +16,34 @@ export const apiClient = axios.create({
   timeout: 120000, // 2 minutes timeout for large document summarization
 });
 
+// Automatic retry interceptor for Render cold-start wake-up
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    
+    if (!config || (config._retryCount || 0) >= 2) {
+      if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+        error.message = 'Connecting to backend... Render free tier server is waking up from sleep. Please click Try Again in 10 seconds.';
+      }
+      return Promise.reject(error);
+    }
+
+    // Auto-retry on network disconnects or 502/503/504 gateway spin-up codes
+    if (
+      error.message === 'Network Error' ||
+      error.code === 'ERR_NETWORK' ||
+      [502, 503, 504].includes(error.response?.status)
+    ) {
+      config._retryCount = (config._retryCount || 0) + 1;
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      return apiClient(config);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export const getStoredApiKey = () => {
   return localStorage.getItem('gemini_api_key') || '';
 };

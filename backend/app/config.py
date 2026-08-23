@@ -31,6 +31,8 @@ class Settings(BaseSettings):
         "bmp",
         "tiff",
         "tif",
+        "heic",
+        "heif",
     ]
 
     # OCR Settings

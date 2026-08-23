@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import time
 from typing import Optional, List, Dict, Any
 import httpx
 
@@ -33,14 +34,13 @@ from .chunking_service import chunking_service
 
 logger = logging.getLogger(__name__)
 
-# Default priority fallback models
+# Default priority fallback models (High-quota models first)
 DEFAULT_CANDIDATE_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
     "gemini-2.0-flash",
     "gemini-2.5-flash",
-    "gemini-1.5-flash",
     "gemini-1.5-flash-latest",
-    "gemini-1.5-flash-8b",
-    "gemini-2.0-flash-exp",
     "gemini-1.5-pro",
     "gemini-1.5-pro-latest",
     "gemini-1.0-pro",
@@ -299,7 +299,9 @@ DOCUMENT TEXT TO ANALYZE:
                 err_msg = res.json().get("error", {}).get("message", "Authentication failed.")
                 raise RuntimeError(f"Google Gemini Authentication Error: {err_msg}")
             elif res.status_code == 429:
-                raise RuntimeError("Google Gemini API Rate Limit / Quota Exceeded (429). Please wait a few seconds and try again.")
+                logger.warning(f"REST call to model '{model_name}' hit rate limit (429). Will try fallback candidate models...")
+                time.sleep(1.0)
+                return None
             else:
                 logger.warning(f"REST call to {model_name} returned status {res.status_code}: {res.text[:200]}")
                 return None
@@ -311,71 +313,77 @@ DOCUMENT TEXT TO ANALYZE:
 
         last_error = None
 
-        # Strategy 1: Direct High-Performance REST API (bypasses SDK routing issues)
-        for model_name in models_to_try:
-            try:
-                logger.info(f"Executing REST generateContent with model '{model_name}'...")
-                result_text = self._generate_with_rest(model_name, prompt, api_key, json_mode=json_mode)
-                if result_text:
-                    logger.info(f"REST request succeeded with model '{model_name}'")
-                    return result_text
-            except Exception as rest_err:
-                err_str = str(rest_err)
-                if "Authentication Error" in err_str or "Rate Limit" in err_str:
-                    raise
-                logger.warning(f"REST request with model '{model_name}' failed: {rest_err}")
-                last_error = rest_err
+        # Two passes: first try all models, if all rate-limited, wait 2.5s and try once more
+        for attempt in range(2):
+            # Strategy 1: Direct High-Performance REST API (bypasses SDK routing issues)
+            for model_name in models_to_try:
+                try:
+                    logger.info(f"Executing REST generateContent with model '{model_name}' (attempt {attempt + 1})...")
+                    result_text = self._generate_with_rest(model_name, prompt, api_key, json_mode=json_mode)
+                    if result_text:
+                        logger.info(f"REST request succeeded with model '{model_name}'")
+                        return result_text
+                except Exception as rest_err:
+                    err_str = str(rest_err)
+                    if "Authentication Error" in err_str:
+                        raise
+                    logger.warning(f"REST request with model '{model_name}' failed: {rest_err}")
+                    last_error = rest_err
 
-        # Strategy 2: Modern google.genai SDK
-        if HAS_GOOGLE_GENAI:
-            try:
-                client = genai.Client(api_key=api_key)
-                for model_name in models_to_try:
-                    try:
-                        logger.info(f"Attempting google-genai SDK with model '{model_name}'...")
-                        config = genai_types.GenerateContentConfig(
-                            response_mime_type="application/json" if json_mode else None
-                        )
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=prompt,
-                            config=config,
-                        )
-                        if response and response.text:
-                            return response.text
-                    except Exception as genai_err:
-                        logger.warning(f"google-genai SDK failed with model '{model_name}': {genai_err}")
-                        last_error = genai_err
-            except Exception as e:
-                logger.warning(f"google-genai client error: {e}")
-                last_error = e
+            # Strategy 2: Modern google.genai SDK
+            if HAS_GOOGLE_GENAI:
+                try:
+                    client = genai.Client(api_key=api_key)
+                    for model_name in models_to_try:
+                        try:
+                            logger.info(f"Attempting google-genai SDK with model '{model_name}'...")
+                            config = genai_types.GenerateContentConfig(
+                                response_mime_type="application/json" if json_mode else None
+                            )
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=prompt,
+                                config=config,
+                            )
+                            if response and response.text:
+                                return response.text
+                        except Exception as genai_err:
+                            logger.warning(f"google-genai SDK failed with model '{model_name}': {genai_err}")
+                            last_error = genai_err
+                except Exception as e:
+                    logger.warning(f"google-genai client error: {e}")
+                    last_error = e
 
-        # Strategy 3: Legacy google.generativeai SDK
-        if HAS_LEGACY_GENAI:
-            try:
-                legacy_genai.configure(api_key=api_key)
-                for model_name in models_to_try:
-                    try:
-                        logger.info(f"Attempting legacy SDK with model '{model_name}'...")
-                        gen_config = {"response_mime_type": "application/json"} if json_mode else {}
-                        model = legacy_genai.GenerativeModel(
-                            model_name=model_name,
-                            generation_config=gen_config,
-                        )
-                        response = model.generate_content(prompt)
-                        if response and response.text:
-                            return response.text
-                    except Exception as leg_err:
-                        logger.warning(f"Legacy SDK failed with model '{model_name}': {leg_err}")
-                        last_error = leg_err
-            except Exception as e:
-                logger.warning(f"Legacy SDK error: {e}")
-                last_error = e
+            # Strategy 3: Legacy google.generativeai SDK
+            if HAS_LEGACY_GENAI:
+                try:
+                    legacy_genai.configure(api_key=api_key)
+                    for model_name in models_to_try:
+                        try:
+                            logger.info(f"Attempting legacy SDK with model '{model_name}'...")
+                            gen_config = {"response_mime_type": "application/json"} if json_mode else {}
+                            model = legacy_genai.GenerativeModel(
+                                model_name=model_name,
+                                generation_config=gen_config,
+                            )
+                            response = model.generate_content(prompt)
+                            if response and response.text:
+                                return response.text
+                        except Exception as leg_err:
+                            logger.warning(f"Legacy SDK failed with model '{model_name}': {leg_err}")
+                            last_error = leg_err
+                except Exception as e:
+                    logger.warning(f"Legacy SDK error: {e}")
+                    last_error = e
+
+            if attempt == 0:
+                logger.info("First pass failed across models, waiting 2s before retry pass...")
+                time.sleep(2.0)
 
         raise RuntimeError(
-            f"AI Analysis failed. Could not communicate with any available Gemini models ({', '.join(models_to_try[:4])}). "
+            f"AI Analysis could not complete across available Gemini models ({', '.join(models_to_try[:4])}). "
             f"Details: {str(last_error)}. "
-            f"Please ensure your API key is valid and has access to Google AI Studio at https://aistudio.google.com/app/apikey"
+            f"If you are using a free-tier Gemini API key, please wait 30 seconds for quota to reset, or provide a new key at https://aistudio.google.com/app/apikey"
         )
 
     def extract_text_from_image(self, image: Any, api_key: Optional[str] = None) -> str:
@@ -443,7 +451,9 @@ DOCUMENT TEXT TO ANALYZE:
                         err_msg = res.json().get("error", {}).get("message", "API key invalid or unauthorized.")
                         raise RuntimeError(f"Google Gemini Authentication Error: {err_msg}")
                     elif res.status_code == 429:
-                        raise RuntimeError("Google Gemini API Rate Limit / Quota Exceeded (429). Please wait a few moments and try again.")
+                        logger.warning(f"REST Vision on {model_name} rate-limited (429). Trying next vision model...")
+                        time.sleep(1.0)
+                        continue
                     else:
                         logger.warning(f"REST Vision on {model_name} returned status {res.status_code}: {res.text[:150]}")
             except (RuntimeError, ValueError):
@@ -524,6 +534,10 @@ SECTION CONTENT:
             except Exception as e:
                 logger.warning(f"Error summarizing chunk {idx + 1}: {e}")
                 chunk_summaries.append(f"### Section {idx + 1} Raw Extract:\n{chunk[:1500]}")
+            
+            # Pacing delay between chunk calls for free-tier rate limits
+            if idx < len(chunks) - 1:
+                time.sleep(0.5)
 
         combined_intermediate = "\n\n".join(chunk_summaries)
 

@@ -30,7 +30,7 @@ class DocumentService:
         """Extract text and metadata from a given file path based on its extension."""
         ext = get_file_extension(original_filename)
 
-        if ext not in ["pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff", "tif"]:
+        if ext not in settings.ALLOWED_EXTENSIONS:
             raise ValueError(f"Unsupported file extension: .{ext}")
 
         if not os.path.exists(file_path):
