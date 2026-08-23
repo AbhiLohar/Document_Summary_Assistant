@@ -235,7 +235,12 @@ CRITICAL REQUIREMENTS:
    *Note: If the document is already clear, well-written, and complete, explicitly include a praise suggestion stating the document is clear.*
 
 OUTPUT FORMAT:
-You MUST respond ONLY with a valid, parseable JSON object matching this schema:
+CRITICAL REQUIREMENT:
+You MUST respond ONLY with a raw, valid, and parseable JSON object.
+Do NOT include any chain-of-thought scratchpads, markdown commentary, drafting notes, or self-refinement checklists.
+Begin directly with {{ and end with }}.
+
+SCHEMA:
 {{
   "summary": "The generated summary text...",
   "key_points": [
@@ -274,11 +279,25 @@ DOCUMENT TEXT TO ANALYZE:
                 {
                     "parts": [{"text": prompt}]
                 }
-            ]
+            ],
+            "systemInstruction": {
+                "parts": [
+                    {
+                        "text": (
+                            "You are a professional Document Summary Assistant. "
+                            "You MUST output ONLY a valid, parseable JSON object adhering strictly to the requested schema. "
+                            "Do NOT output any markdown thinking scratchpads, CoT reasoning steps, preamble, self-correction, or explanation."
+                        )
+                    }
+                ]
+            }
         }
         
         if json_mode:
-            payload["generationConfig"] = {"responseMimeType": "application/json"}
+            payload["generationConfig"] = {
+                "responseMimeType": "application/json",
+                "temperature": 0.2,
+            }
 
         with httpx.Client(timeout=60.0) as client:
             res = client.post(url, json=payload)
@@ -576,43 +595,88 @@ COMBINED SECTION SUMMARIES:
         return self._clean_and_parse_json(raw_text)
 
     def _clean_and_parse_json(self, raw_text: str) -> Dict[str, Any]:
-        """Safely parse JSON response from LLM, stripping backticks and markdown wrapping if present."""
+        """Safely parse JSON response from LLM, extracting from code fences or bracket patterns, stripping CoT scratchpad."""
         text = raw_text.strip()
 
-        # Remove ```json ... ``` wrappers if model included them despite json mode
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-
+        # Step 1: Direct JSON parsing
         try:
             return json.loads(text)
-        except json.JSONDecodeError:
-            # Regex search for outermost JSON object
-            match = re.search(r"\{.*\}", text, re.DOTALL)
-            if match:
-                try:
-                    return json.loads(match.group(0))
-                except json.JSONDecodeError:
-                    pass
+        except Exception:
+            pass
 
-            logger.error(f"Failed to parse JSON from AI output. Raw text was:\n{raw_text}")
-            # Fallback structure with raw text
+        # Step 2: Extract from markdown code fence (```json ... ``` or ``` ... ```)
+        code_blocks = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+        for block in reversed(code_blocks):
+            block = block.strip()
+            try:
+                return json.loads(block)
+            except Exception:
+                pass
+
+        # Step 3: Extract balanced JSON object starting specifically at {"summary" or {\s*"summary"
+        for match in re.finditer(r'\{\s*"summary"\s*:', text):
+            start_idx = match.start()
+            depth = 0
+            in_string = False
+            escape = False
+            for i in range(start_idx, len(text)):
+                c = text[i]
+                if escape:
+                    escape = False
+                    continue
+                if c == '\\':
+                    escape = True
+                    continue
+                if c == '"':
+                    in_string = not in_string
+                    continue
+                if not in_string:
+                    if c == '{':
+                        depth += 1
+                    elif c == '}':
+                        depth -= 1
+                        if depth == 0:
+                            candidate = text[start_idx:i + 1]
+                            try:
+                                return json.loads(candidate)
+                            except Exception:
+                                pass
+                            break
+
+        # Step 4: Extract markdown section headings if model generated structured text
+        summary_match = re.search(
+            r'(?:\*Refining Summary:\*|\*Summary:\*|###\s*Summary)\s*\n*([\s\S]*?)(?=\n\*(?:Refining\s+)?Key Points|\n###|\n```|\Z)',
+            text,
+            re.IGNORECASE,
+        )
+        key_points_matches = re.findall(r'^[*-]\s*(.+)$', text, re.MULTILINE)
+
+        parsed_summary = summary_match.group(1).strip() if summary_match else ""
+        # Filter out scratchpad/thinking lines
+        clean_summary_lines = [
+            line.strip()
+            for line in parsed_summary.split('\n')
+            if not line.strip().startswith('*') and not line.strip().startswith('`') and len(line.strip()) > 10
+        ]
+        if clean_summary_lines:
+            parsed_summary = "\n\n".join(clean_summary_lines)
+
+        if parsed_summary and len(parsed_summary) > 40:
             return {
-                "summary": raw_text,
-                "key_points": ["Direct summary generated from document content."],
-                "main_ideas": [{"title": "General Content", "summary": "Extracted document overview."}],
+                "summary": parsed_summary,
+                "key_points": [kp for kp in key_points_matches if len(kp) > 20 and not kp.startswith('*')][:6],
+                "main_ideas": [{"title": "Document Overview", "summary": parsed_summary[:200]}],
                 "improvement_suggestions": [
                     {
                         "category": "Structure",
-                        "suggestion": "Consider formatting the document with explicit headings for clearer AI parsing.",
+                        "suggestion": "Formatting headings clearly enhances automated AI analysis.",
                         "severity": "low",
                     }
                 ],
             }
+
+        logger.warning(f"Failed to parse JSON from AI output. Activating extractive fallback...")
+        return self._generate_extractive_fallback(text, SummaryLength.MEDIUM)
 
     def _generate_extractive_fallback(self, text: str, summary_length: SummaryLength) -> Dict[str, Any]:
         """High-fidelity NLP extractive summarizer used as a fail-safe fallback when Gemini API quotas are exhausted."""
