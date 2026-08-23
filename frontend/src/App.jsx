@@ -11,6 +11,7 @@ import MainIdeasCard from './components/MainIdeasCard';
 import ImprovementSuggestionsCard from './components/ImprovementSuggestionsCard';
 import ExtractedTextViewer from './components/ExtractedTextViewer';
 import ExportModal from './components/ExportModal';
+import BackgroundArtwork from './components/BackgroundArtwork';
 import ApiKeyModal from './components/ApiKeyModal';
 import ErrorAlert from './components/ErrorAlert';
 import {
@@ -298,9 +299,8 @@ Next Steps:
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fc] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 transition-colors duration-200 bg-mesh-grid relative">
       
-      {/* Background ambient radial glows */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-glow" />
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 dark:bg-violet-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+      {/* Background artwork & ambient vectors */}
+      <BackgroundArtwork />
 
       {/* Navigation Header */}
       <Header

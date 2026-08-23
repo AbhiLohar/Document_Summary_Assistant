@@ -94,9 +94,9 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
       
       {/* Top Hero Section */}
       <div className="text-center space-y-3 pt-2">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-50/80 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/80 shadow-xs mb-2">
+        <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-brand-50/90 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/80 shadow-xs mb-2">
           <Sparkles className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-          <span>Next-Gen Document Intelligence</span>
+          <span>AI DOCUMENT INTELLIGENCE</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15]">
@@ -106,8 +106,8 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
           </span>
         </h1>
         
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          AI-powered extraction, summarization, and insights for PDFs and scanned documents.
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-medium tracking-wide">
+          Extract • Summarize • Analyze • Improve
         </p>
       </div>
 

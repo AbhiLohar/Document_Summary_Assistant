@@ -63,16 +63,16 @@ export default function Header({
           <button
             onClick={onOpenApiKeyModal}
             type="button"
-            className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+            className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
               hasApiKey
-                ? 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                ? 'bg-brand-50/80 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border-brand-200/80 dark:border-brand-800/80 hover:bg-brand-100'
                 : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100'
             }`}
-            title="Configure Gemini API Key"
+            title={hasApiKey ? 'Google Gemini API Connected & Ready' : 'Configure Gemini API Key'}
           >
-            <Key className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+            <Key className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
             <span className="hidden sm:inline">
-              {hasApiKey ? 'Gemini Connected' : 'Set API Key'}
+              {hasApiKey ? 'AI Ready' : 'Set API Key'}
             </span>
           </button>
 

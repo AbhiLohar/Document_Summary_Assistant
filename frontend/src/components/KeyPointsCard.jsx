@@ -55,17 +55,35 @@ export default function KeyPointsCard({ keyPoints = [] }) {
       <div className="grid grid-cols-1 gap-3 pt-1">
         {keyPoints.map((point, index) => {
           const numStr = String(index + 1).padStart(2, '0');
+          
+          // Check for category prefix (e.g. "PROBLEM: ...", "CONSTRAINT: ...")
+          let category = null;
+          let textContent = point;
+          const colonMatch = point.match(/^([A-Z\s]{3,18}):\s*(.+)$/);
+          if (colonMatch) {
+            category = colonMatch[1].trim();
+            textContent = colonMatch[2].trim();
+          }
+
           return (
             <div
               key={index}
-              className="flex items-start space-x-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700/80 hover:shadow-xs transition-all duration-200"
+              className="flex items-start space-x-3.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700/80 hover:shadow-xs transition-all duration-200"
             >
               <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/80 px-2 py-1 rounded-lg border border-brand-200/60 dark:border-brand-800/60 flex-shrink-0 mt-0.5 select-none">
                 {numStr}
               </span>
-              <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal">
-                {point}
-              </p>
+              
+              <div className="flex-1 space-y-1">
+                {category && (
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300 bg-brand-50/80 dark:bg-brand-950/60 px-2 py-0.5 rounded-md border border-brand-200/60 dark:border-brand-800/60 mr-2">
+                    {category}
+                  </span>
+                )}
+                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal inline">
+                  {textContent}
+                </p>
+              </div>
             </div>
           );
         })}

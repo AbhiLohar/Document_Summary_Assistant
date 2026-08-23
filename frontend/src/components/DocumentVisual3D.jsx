@@ -116,10 +116,10 @@ export default function DocumentVisual3D({ isScanning = false, isDragOver = fals
           <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[10px]">
             <div className="flex items-center space-x-1.5 text-slate-700 dark:text-slate-300 font-medium">
               <Zap className="w-3 h-3 text-brand-500" />
-              <span>Multi-Strategy Summarizer</span>
+              <span>Multi-Strategy Pipeline</span>
             </div>
-            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-              98.4% Acc
+            <span className="font-mono text-brand-600 dark:text-brand-400 font-semibold">
+              PDF + OCR + AI
             </span>
           </div>
 

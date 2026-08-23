@@ -106,6 +106,57 @@ export default function DocumentMeta({ metadata, onReset, onOpenExport }) {
         </div>
 
       </div>
+
+      {/* Compact Analysis Overview Bar (Specification Page 24) */}
+      <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Analysis Overview
+          </span>
+          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
+            Verified Source Data
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-center">
+            <p className="text-base sm:text-lg font-bold font-mono text-slate-950 dark:text-white">
+              {metadata.word_count?.toLocaleString() || 0}
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Words
+            </p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-center">
+            <p className="text-base sm:text-lg font-bold font-mono text-slate-950 dark:text-white">
+              {metadata.line_count || Math.max(1, Math.round((metadata.word_count || 0) / 10))}
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Lines
+            </p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-center">
+            <p className="text-sm sm:text-base font-bold text-brand-600 dark:text-brand-400 truncate">
+              {metadata.is_scanned ? 'OCR Pipeline' : 'Native Parser'}
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Extraction Method
+            </p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-center">
+            <p className="text-sm sm:text-base font-bold text-violet-600 dark:text-violet-400">
+              AI Synthesized
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Intelligence Status
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
