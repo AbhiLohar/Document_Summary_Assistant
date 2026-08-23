@@ -127,13 +127,22 @@ class AIService:
         key = self._get_active_key(api_key)
 
         is_large = chunking_service.is_large_document(text)
-        if is_large:
-            logger.info("Document exceeds single-pass limit. Using hierarchical Map-Reduce summarization.")
-            result_data = self._map_reduce_analysis(text, summary_length, key)
-            is_hierarchical = True
-        else:
-            result_data = self._single_pass_analysis(text, summary_length, key)
-            is_hierarchical = False
+        try:
+            if is_large:
+                logger.info("Document exceeds single-pass limit. Using hierarchical Map-Reduce summarization.")
+                result_data = self._map_reduce_analysis(text, summary_length, key)
+                is_hierarchical = True
+            else:
+                result_data = self._single_pass_analysis(text, summary_length, key)
+                is_hierarchical = False
+        except RuntimeError as re_err:
+            err_str = str(re_err).lower()
+            if "quota" in err_str or "rate limit" in err_str or "429" in err_str or "resource_exhausted" in err_str:
+                logger.warning(f"Gemini API quota exceeded/rate-limited. Activating Intelligent Hybrid NLP Extractive Fallback: {re_err}")
+                result_data = self._generate_extractive_fallback(text, summary_length)
+                is_hierarchical = False
+            else:
+                raise
 
         # Fallback metadata if none provided
         if not metadata:
@@ -604,6 +613,119 @@ COMBINED SECTION SUMMARIES:
                     }
                 ],
             }
+
+    def _generate_extractive_fallback(self, text: str, summary_length: SummaryLength) -> Dict[str, Any]:
+        """High-fidelity NLP extractive summarizer used as a fail-safe fallback when Gemini API quotas are exhausted."""
+        import re
+        from collections import Counter
+
+        # Clean text and extract sentences
+        cleaned = text.replace("\r", " ").strip()
+        paragraphs = [p.strip() for p in cleaned.split("\n\n") if p.strip()]
+        raw_sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", cleaned) if len(s.strip()) > 15]
+
+        if not raw_sentences:
+            raw_sentences = [p for p in paragraphs if p]
+
+        # Stopwords for scoring
+        stopwords = {
+            "the", "a", "an", "and", "or", "but", "is", "are", "was", "were", "in", "on", "at", "to",
+            "for", "of", "with", "by", "from", "up", "about", "into", "over", "after", "it", "this",
+            "that", "these", "those", "they", "them", "their", "we", "us", "our", "you", "your", "he",
+            "him", "his", "she", "her", "which", "what", "who", "when", "where", "why", "how", "all",
+            "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not",
+            "only", "own", "same", "so", "than", "too", "very", "can", "will", "just", "should", "now"
+        }
+
+        # Calculate word frequencies
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", cleaned.lower())
+        meaningful_words = [w for w in words if w not in stopwords]
+        word_counts = Counter(meaningful_words)
+        max_freq = max(word_counts.values()) if word_counts else 1
+
+        # Score sentences based on term frequency and position
+        scored_sentences = []
+        for idx, sentence in enumerate(raw_sentences):
+            sentence_words = re.findall(r"\b[a-zA-Z]{3,}\b", sentence.lower())
+            if not sentence_words:
+                continue
+            # TF score
+            tf_score = sum(word_counts.get(w, 0) / max_freq for w in sentence_words) / len(sentence_words)
+            # Position bias: introductory and concluding sentences carry higher weight
+            pos_bonus = 1.3 if idx == 0 else (1.15 if idx < 3 else (1.1 if idx == len(raw_sentences) - 1 else 1.0))
+            final_score = tf_score * pos_bonus
+            scored_sentences.append((idx, sentence, final_score))
+
+        # Sort by score
+        by_score = sorted(scored_sentences, key=lambda x: x[2], reverse=True)
+
+        # Select sentence counts based on requested length
+        if summary_length == SummaryLength.SHORT:
+            target_count = min(3, len(by_score))
+        elif summary_length == SummaryLength.LONG:
+            target_count = min(8, len(by_score))
+        else:  # MEDIUM
+            target_count = min(5, len(by_score))
+
+        top_sentences = by_score[:target_count]
+        # Sort top sentences back into original document chronological order
+        chronological_summary_sentences = [s[1] for s in sorted(top_sentences, key=lambda x: x[0])]
+        summary_text = " ".join(chronological_summary_sentences)
+
+        # Generate Key Points (top 5-8 distinct informative sentences formatted as bullets)
+        key_point_candidates = [s[1] for s in by_score[:min(7, len(by_score))]]
+        key_points = []
+        for s in key_point_candidates:
+            cleaned_kp = s.rstrip(".")
+            if len(cleaned_kp) > 20 and cleaned_kp not in key_points:
+                key_points.append(cleaned_kp)
+
+        if not key_points and raw_sentences:
+            key_points = [raw_sentences[0]]
+
+        # Generate Main Ideas based on paragraph clusters
+        main_ideas = []
+        for i, p in enumerate(paragraphs[:4]):
+            p_sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", p) if len(s.strip()) > 10]
+            if p_sentences:
+                title = f"Topic Section {i + 1}"
+                if len(p_sentences[0]) < 60:
+                    title = p_sentences[0].rstrip(".")
+                main_ideas.append({
+                    "title": title,
+                    "summary": p_sentences[0] if len(p_sentences) == 1 else " ".join(p_sentences[:2])
+                })
+
+        if not main_ideas:
+            main_ideas = [
+                {"title": "Core Subject", "summary": summary_text[:200] + "..." if len(summary_text) > 200 else summary_text}
+            ]
+
+        # Improvement Suggestions
+        suggestions = [
+            {
+                "category": "Clarity & Readability",
+                "suggestion": "Include explicit section subheadings and bulleted executive summaries to enhance skimmability.",
+                "severity": "low",
+            },
+            {
+                "category": "Evidence & Data",
+                "suggestion": "Bolster high-level assertions with specific numerical metrics, comparative benchmarks, or primary citations.",
+                "severity": "medium",
+            },
+            {
+                "category": "Actionability",
+                "suggestion": "Conclude key sections with direct, actionable next steps or clear practical takeaways for readers.",
+                "severity": "low",
+            },
+        ]
+
+        return {
+            "summary": summary_text or text[:500],
+            "key_points": key_points,
+            "main_ideas": main_ideas,
+            "improvement_suggestions": suggestions,
+        }
 
 
 # Singleton instance
