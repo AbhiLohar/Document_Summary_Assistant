@@ -9,7 +9,10 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle2,
+  Layers,
+  Shield,
 } from 'lucide-react';
+import DocumentVisual3D from './DocumentVisual3D';
 
 const MAX_FILE_SIZE_MB = 25;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -35,12 +38,12 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
       const ext = fileToProcess.name.split('.').pop()?.toLowerCase() || '';
 
       if (fileToProcess.size > MAX_FILE_SIZE_BYTES) {
-        setErrorMessage(`File exceeds the limit (${(fileToProcess.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed is ${MAX_FILE_SIZE_MB}MB.`);
+        setErrorMessage(`File exceeds size limit (${(fileToProcess.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed is ${MAX_FILE_SIZE_MB}MB.`);
         return;
       }
 
       if (!ALLOWED_EXTENSIONS.includes(ext) && !fileToProcess.type.startsWith('image/') && !fileToProcess.type.includes('pdf')) {
-        setErrorMessage('Unsupported format. Please upload a PDF or supported image (PNG, JPG, WEBP, BMP, TIFF, HEIC).');
+        setErrorMessage('Unsupported format. Please upload a PDF or image (PNG, JPG, WEBP, BMP, TIFF, HEIC).');
         return;
       }
 
@@ -51,7 +54,7 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
     if (rejectedFiles && rejectedFiles.length > 0) {
       const error = rejectedFiles[0].errors[0];
       if (error?.code === 'file-too-large') {
-        setErrorMessage(`File exceeds the limit. Maximum allowed size is ${MAX_FILE_SIZE_MB}MB.`);
+        setErrorMessage(`File exceeds size limit. Maximum allowed is ${MAX_FILE_SIZE_MB}MB.`);
       } else {
         setErrorMessage('Unsupported file format. Please upload a PDF or supported image file.');
       }
@@ -87,121 +90,138 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-8 animate-fade-in">
+    <div className="w-full max-w-5xl mx-auto space-y-10 animate-fade-in">
       
-      {/* Central Hero Heading */}
-      <div className="text-center space-y-2.5 pt-4">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-zinc-950 dark:text-white">
-          Understand your documents. Instantly.
+      {/* Top Hero Section */}
+      <div className="text-center space-y-3 pt-2">
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-50/80 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/80 shadow-xs mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+          <span>Next-Gen Document Intelligence</span>
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15]">
+          Understand your documents.{' '}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-indigo-600 to-violet-600 dark:from-brand-400 dark:via-indigo-400 dark:to-violet-400">
+            Instantly.
+          </span>
         </h1>
-        <p className="text-sm sm:text-[15px] text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
-          Upload a PDF or scanned document and let AI extract, understand, and summarize it.
+        
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          AI-powered extraction, summarization, and insights for PDFs and scanned documents.
         </p>
       </div>
 
-      {/* Upload Drop Area / Selected Document Card */}
-      <div
-        {...getRootProps()}
-        className={`relative border rounded-2xl p-8 sm:p-14 text-center cursor-pointer transition-all duration-200 ${
-          isDragActive && !isDragReject
-            ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/20 ring-4 ring-brand-500/10 scale-[1.005]'
-            : isDragReject
-            ? 'border-rose-400 bg-rose-50/30 dark:bg-rose-950/20'
-            : selectedFile
-            ? 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-card'
-            : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50/60 dark:hover:bg-zinc-900 shadow-subtle'
-        } ${isLoading ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}
-      >
-        <input {...getInputProps()} />
+      {/* Main Interactive Grid: 2.5D Visual + Upload Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2">
+        
+        {/* Left Column: 2.5D Document Stack */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center">
+          <DocumentVisual3D isDragOver={isDragActive} isScanning={isLoading} />
+        </div>
 
-        {selectedFile ? (
-          /* Document Ready State */
-          <div className="space-y-5" onClick={(e) => e.stopPropagation()}>
-            <div className="w-12 h-12 mx-auto rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center border border-zinc-200 dark:border-zinc-700 shadow-subtle">
-              {selectedFile.type?.includes('pdf') || selectedFile.name?.toLowerCase().endsWith('.pdf') ? (
-                <FileText className="w-6 h-6" />
-              ) : (
-                <ImageIcon className="w-6 h-6" />
-              )}
-            </div>
+        {/* Right Column: Upload Card */}
+        <div className="lg:col-span-7">
+          <div
+            {...getRootProps()}
+            className={`relative rounded-3xl p-7 sm:p-10 text-center cursor-pointer transition-all duration-300 border ${
+              isDragActive && !isDragReject
+                ? 'border-brand-500 bg-brand-50/60 dark:bg-brand-950/30 shadow-glow-brand ring-4 ring-brand-500/15 scale-[1.01]'
+                : isDragReject
+                ? 'border-rose-400 bg-rose-50/40 dark:bg-rose-950/20'
+                : selectedFile
+                ? 'border-brand-300 dark:border-brand-700 bg-white dark:bg-[#0f172a] shadow-card-hover'
+                : 'border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#0f172a]/90 hover:border-brand-300 dark:hover:border-brand-700 shadow-card hover:shadow-card-hover'
+            } ${isLoading ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}
+          >
+            <input {...getInputProps()} />
 
-            <div className="space-y-1">
-              <h3 className="text-[15px] font-semibold text-zinc-950 dark:text-white truncate max-w-md mx-auto">
-                {selectedFile.name}
-              </h3>
-              <div className="flex items-center justify-center space-x-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <span className="uppercase font-medium">{selectedFile.name.split('.').pop() || 'File'}</span>
-                <span>•</span>
-                <span>{formatFileSize(selectedFile.size)}</span>
-                <span>•</span>
-                <span className="text-emerald-600 dark:text-emerald-400 flex items-center font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                  Ready to analyze
-                </span>
+            {selectedFile ? (
+              /* Selected Document Preview State */
+              <div className="space-y-5" onClick={(e) => e.stopPropagation()}>
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-brand-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-brand-500/25">
+                  {selectedFile.type?.includes('pdf') || selectedFile.name?.toLowerCase().endsWith('.pdf') ? (
+                    <FileText className="w-7 h-7" />
+                  ) : (
+                    <ImageIcon className="w-7 h-7" />
+                  )}
+                </div>
+
+                <div className="space-y-1.5 px-2">
+                  <h3 className="text-base font-bold text-slate-950 dark:text-white truncate max-w-sm mx-auto">
+                    {selectedFile.name}
+                  </h3>
+                  <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <span className="uppercase">{selectedFile.name.split('.').pop() || 'FILE'}</span>
+                    <span>•</span>
+                    <span>{formatFileSize(selectedFile.size)}</span>
+                    <span>•</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                      Ready to analyze
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Change</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleStartProcessing}
+                    disabled={isLoading}
+                    className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-violet-600 hover:from-brand-500 hover:to-violet-500 shadow-md shadow-brand-600/30 hover:shadow-brand-500/40 transition-all transform hover:-translate-y-0.5"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Analyze Document</span>
+                    <ArrowRight className="w-4 h-4 ml-0.5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Empty Dropzone State */
+              <div className="space-y-4">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-brand-50 to-violet-50 dark:from-slate-800 dark:to-slate-800/80 border border-brand-200/60 dark:border-slate-700 text-brand-600 dark:text-brand-400 flex items-center justify-center shadow-sm">
+                  <Upload className="w-6 h-6" />
+                </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={handleRemoveFile}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Remove</span>
-              </button>
+                <div className="space-y-1">
+                  <p className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">
+                    {isDragActive ? 'Drop to analyze instantly' : 'Drop your document here'}
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    or <span className="text-brand-600 dark:text-brand-400 font-semibold hover:underline">Browse files</span> from your device
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                onClick={handleStartProcessing}
-                disabled={isLoading}
-                className="inline-flex items-center space-x-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 shadow-subtle transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Analyze Document</span>
-                <ArrowRight className="w-4 h-4 ml-0.5" />
-              </button>
-            </div>
+                {/* Format Pills */}
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300">PDF</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300">PNG</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300">JPG</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300">WEBP</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300">BMP</span>
+                  <span className="text-slate-400 dark:text-slate-500">• Max {MAX_FILE_SIZE_MB}MB</span>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          /* Empty Dropzone State */
-          <div className="space-y-4">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center border border-zinc-200/80 dark:border-zinc-700/80 shadow-subtle">
-              <Upload className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
-            </div>
+        </div>
 
-            <div className="space-y-1">
-              <p className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100">
-                {isDragActive ? 'Drop your document here' : 'Drop your document here'}
-              </p>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                or <span className="text-brand-600 dark:text-brand-400 font-medium hover:underline">Browse files</span>
-              </p>
-            </div>
-
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
-              <span>PDF</span>
-              <span>•</span>
-              <span>PNG</span>
-              <span>•</span>
-              <span>JPG</span>
-              <span>•</span>
-              <span>JPEG</span>
-              <span>•</span>
-              <span>WEBP</span>
-              <span>•</span>
-              <span>Max {MAX_FILE_SIZE_MB}MB</span>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Error Alert */}
+      {/* Error Message */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs sm:text-sm flex items-start space-x-3">
-          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 text-rose-600" />
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs sm:text-sm flex items-start space-x-3 max-w-2xl mx-auto">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
           <div>
-            <p className="font-semibold">Unable to accept file</p>
+            <p className="font-bold">Unable to process file</p>
             <p className="text-xs mt-0.5">{errorMessage}</p>
           </div>
         </div>
@@ -209,18 +229,18 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
 
       {/* Sample Documents Section */}
       {!selectedFile && (
-        <div className="pt-2 text-center space-y-3">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            Or test with a sample document
+        <div className="pt-2 text-center space-y-3 max-w-2xl mx-auto">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Or try with a sample document
           </span>
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => onSelectSample('ai_research')}
               disabled={isLoading}
-              className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-700 dark:text-zinc-300 shadow-subtle transition-all"
+              className="inline-flex items-center space-x-2.5 px-4 py-2.5 rounded-2xl text-xs font-semibold bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <FileText className="w-3.5 h-3.5 text-zinc-500" />
+              <FileText className="w-4 h-4 text-brand-600 dark:text-brand-400" />
               <span>Edge AI Research Paper (PDF)</span>
             </button>
 
@@ -228,9 +248,9 @@ export default function FileUpload({ onFileSelected, isLoading, onSelectSample }
               type="button"
               onClick={() => onSelectSample('meeting_notes')}
               disabled={isLoading}
-              className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-700 dark:text-zinc-300 shadow-subtle transition-all"
+              className="inline-flex items-center space-x-2.5 px-4 py-2.5 rounded-2xl text-xs font-semibold bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <ImageIcon className="w-3.5 h-3.5 text-zinc-500" />
+              <ImageIcon className="w-4 h-4 text-violetAccent-500" />
               <span>Strategy Notes (OCR Image)</span>
             </button>
           </div>

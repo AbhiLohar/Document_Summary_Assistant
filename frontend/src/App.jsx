@@ -96,12 +96,12 @@ export default function App() {
 
       if (extractRes.metadata?.is_scanned) {
         setCurrentStage('ocr');
-        await new Promise((r) => setTimeout(r, 350));
+        await new Promise((r) => setTimeout(r, 400));
       }
 
       // Step 2: AI Document Analysis
       setCurrentStage('analyze');
-      await new Promise((r) => setTimeout(r, 350));
+      await new Promise((r) => setTimeout(r, 400));
       setCurrentStage('summarize');
 
       const analysis = await summarizeDocument({
@@ -113,10 +113,10 @@ export default function App() {
       setAnalysisResult(analysis);
       setCurrentStage('complete');
 
-      // Subtle celebratory confetti
+      // Celebratory confetti
       confetti({
-        particleCount: 40,
-        spread: 50,
+        particleCount: 50,
+        spread: 60,
         origin: { y: 0.85 },
       });
     } catch (err) {
@@ -266,8 +266,8 @@ Next Steps:
       setCurrentStage('complete');
 
       confetti({
-        particleCount: 40,
-        spread: 50,
+        particleCount: 50,
+        spread: 60,
         origin: { y: 0.85 },
       });
     } catch (err) {
@@ -296,8 +296,12 @@ Next Steps:
   const isLoading = ['upload', 'extract', 'ocr', 'analyze', 'summarize'].includes(currentStage);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#0c0d12] text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#f8f9fc] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 transition-colors duration-200 bg-mesh-grid relative">
       
+      {/* Background ambient radial glows */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-glow" />
+      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 dark:bg-violet-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+
       {/* Navigation Header */}
       <Header
         darkMode={darkMode}
@@ -309,10 +313,10 @@ Next Steps:
         isComplete={currentStage === 'complete'}
       />
 
-      {/* Main Content Shell */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* Main Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
         
-        {/* Global Error Alert */}
+        {/* Global Error Banner */}
         {errorMessage && (
           <ErrorAlert
             error={errorMessage}
@@ -322,7 +326,7 @@ Next Steps:
           />
         )}
 
-        {/* Upload View (Primary Entry) */}
+        {/* Upload View */}
         {(currentStage === 'idle' || currentStage === 'error') && (
           <FileUpload
             onFileSelected={handleProcessFile}
@@ -340,11 +344,11 @@ Next Steps:
           />
         )}
 
-        {/* Document Workspace Results View */}
+        {/* Results Workspace */}
         {currentStage === 'complete' && analysisResult && (
           <div className="space-y-6 animate-fade-in">
             
-            {/* Document Header & Identity */}
+            {/* Top Document Metadata Bar */}
             <DocumentMeta
               metadata={analysisResult.metadata}
               onReset={handleReset}
@@ -358,7 +362,7 @@ Next Steps:
               isRegenerating={isRegenerating}
             />
 
-            {/* AI Summary Centerpiece */}
+            {/* AI Summary Centerpiece Card */}
             <SummaryCard
               summary={analysisResult.summary}
               summaryLength={analysisResult.summary_length}
@@ -368,13 +372,13 @@ Next Steps:
             {/* Key Takeaways */}
             <KeyPointsCard keyPoints={analysisResult.key_points} />
 
-            {/* Main Ideas & Section Breakdown */}
+            {/* Main Ideas & Section Outlines */}
             <MainIdeasCard mainIdeas={analysisResult.main_ideas} />
 
-            {/* Actionable Editorial Feedback */}
+            {/* Improvement Suggestions */}
             <ImprovementSuggestionsCard suggestions={analysisResult.improvement_suggestions} />
 
-            {/* Collapsible Raw Extracted Text Drawer */}
+            {/* Raw Extracted Text Drawer */}
             <ExtractedTextViewer
               extractedText={analysisResult.extracted_text}
               metadata={analysisResult.metadata}
@@ -399,10 +403,10 @@ Next Steps:
         data={analysisResult}
       />
 
-      {/* Minimalist Footer */}
-      <footer className="w-full border-t border-zinc-200/80 dark:border-zinc-800/80 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400 bg-white/50 dark:bg-zinc-900/50">
+      {/* Footer */}
+      <footer className="w-full border-t border-slate-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-[#070a12]/40 backdrop-blur-xs">
         <p>
-          Document Intelligence Workspace • Powered by PyMuPDF, Tesseract OCR & Google Gemini
+          Document Summary Assistant • Production AI Architecture with PyMuPDF, Tesseract OCR & Google Gemini
         </p>
       </footer>
 

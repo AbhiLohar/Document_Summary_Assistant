@@ -7,6 +7,7 @@ import {
   Volume2,
   VolumeX,
   Layers,
+  FileCheck2,
 } from 'lucide-react';
 
 export default function SummaryCard({ summary, summaryLength, isHierarchical }) {
@@ -44,27 +45,35 @@ export default function SummaryCard({ summary, summaryLength, isHierarchical }) 
   const wordCount = summary ? summary.split(/\s+/).filter(Boolean).length : 0;
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-card space-y-5 relative">
+    <div className="relative bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-card hover:shadow-card-hover transition-all duration-300 space-y-5 overflow-hidden">
       
+      {/* Decorative ambient gradient at the top of the card */}
+      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brand-600 via-violet-600 to-brand-400" />
+
       {/* Top Header & Actions */}
-      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shadow-subtle">
-            <Sparkles className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-violet-600 text-white flex items-center justify-center shadow-md shadow-brand-500/20">
+            <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold text-zinc-950 dark:text-white">
-              AI Summary
-            </h3>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {summaryLength ? `${summaryLength.charAt(0).toUpperCase() + summaryLength.slice(1)} Mode` : 'Executive Summary'} • {wordCount} words
+            <div className="flex items-center space-x-2">
+              <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                AI Executive Summary
+              </h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
+                Generated
+              </span>
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {summaryLength ? `${summaryLength.charAt(0).toUpperCase() + summaryLength.slice(1)} Mode` : 'Executive'} • {wordCount} words
             </span>
           </div>
         </div>
 
         {/* Action icons */}
-        <div className="flex items-center space-x-1.5">
-          {/* TTS Button */}
+        <div className="flex items-center space-x-2">
+          {/* TTS Audio Player */}
           <button
             type="button"
             onClick={handleSpeak}
@@ -72,18 +81,18 @@ export default function SummaryCard({ summary, summaryLength, isHierarchical }) 
             className={`p-2 rounded-xl text-xs font-medium border transition-colors ${
               isSpeaking
                 ? 'bg-brand-50 border-brand-300 text-brand-600 dark:bg-brand-950 dark:border-brand-700 dark:text-brand-300 animate-pulse'
-                : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
-            title={isSpeaking ? 'Stop audio' : 'Read aloud'}
+            title={isSpeaking ? 'Stop audio' : 'Listen to summary'}
           >
-            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
 
           {/* Copy Button */}
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-subtle"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
           >
             {copied ? (
               <>
@@ -102,7 +111,7 @@ export default function SummaryCard({ summary, summaryLength, isHierarchical }) 
 
       {/* Hierarchical note */}
       {isHierarchical && (
-        <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 text-xs text-zinc-700 dark:text-zinc-300 flex items-center space-x-2">
+        <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 text-xs text-indigo-900 dark:text-indigo-200 flex items-center space-x-2.5">
           <Layers className="w-4 h-4 flex-shrink-0 text-brand-600 dark:text-brand-400" />
           <span>
             <strong>Hierarchical Synthesis:</strong> Content was analyzed across multiple sections and synthesized into this unified document summary.
@@ -110,8 +119,8 @@ export default function SummaryCard({ summary, summaryLength, isHierarchical }) 
         </div>
       )}
 
-      {/* Markdown Body */}
-      <div className="prose-editorial">
+      {/* Markdown Body with Editorial Typography */}
+      <div className="prose-editorial pt-1">
         <ReactMarkdown>{summary || 'No summary generated.'}</ReactMarkdown>
       </div>
 

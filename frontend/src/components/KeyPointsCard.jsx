@@ -14,19 +14,19 @@ export default function KeyPointsCard({ keyPoints = [] }) {
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-card space-y-4">
+    <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-card space-y-4">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center">
-            <ListOrdered className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-200/60 dark:border-brand-800/60">
+            <ListOrdered className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold text-zinc-950 dark:text-white">
+            <h3 className="text-base font-bold text-slate-950 dark:text-white">
               Key Takeaways
             </h3>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               {keyPoints.length} core findings extracted from document
             </span>
           </div>
@@ -35,7 +35,7 @@ export default function KeyPointsCard({ keyPoints = [] }) {
         <button
           type="button"
           onClick={handleCopyAll}
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-subtle"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
         >
           {copied ? (
             <>
@@ -52,18 +52,18 @@ export default function KeyPointsCard({ keyPoints = [] }) {
       </div>
 
       {/* Points list */}
-      <div className="grid grid-cols-1 gap-2.5 pt-1">
+      <div className="grid grid-cols-1 gap-3 pt-1">
         {keyPoints.map((point, index) => {
           const numStr = String(index + 1).padStart(2, '0');
           return (
             <div
               key={index}
-              className="flex items-start space-x-3.5 p-3.5 rounded-xl bg-zinc-50/70 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-150"
+              className="flex items-start space-x-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700/80 hover:shadow-xs transition-all duration-200"
             >
-              <span className="font-mono text-xs font-semibold text-zinc-400 dark:text-zinc-500 flex-shrink-0 mt-0.5 select-none">
+              <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/80 px-2 py-1 rounded-lg border border-brand-200/60 dark:border-brand-800/60 flex-shrink-0 mt-0.5 select-none">
                 {numStr}
               </span>
-              <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal">
                 {point}
               </p>
             </div>
