@@ -1,14 +1,22 @@
 import React from 'react';
-import { AlertCircle, RotateCcw, Key, X } from 'lucide-react';
+import { AlertCircle, RotateCcw, Key, X, ExternalLink, Clock } from 'lucide-react';
 
 export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismiss }) {
   if (!error) return null;
 
+  const errorLower = error.toLowerCase();
+  const isRateLimit =
+    errorLower.includes('429') ||
+    errorLower.includes('rate limit') ||
+    errorLower.includes('quota') ||
+    errorLower.includes('resource_exhausted');
+
   const isKeyError =
-    error.toLowerCase().includes('api key') ||
-    error.toLowerCase().includes('gemini') ||
-    error.toLowerCase().includes('quota') ||
-    error.toLowerCase().includes('unauthenticated');
+    isRateLimit ||
+    errorLower.includes('api key') ||
+    errorLower.includes('gemini') ||
+    errorLower.includes('unauthenticated') ||
+    errorLower.includes('authentication');
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 shadow-sm animate-in fade-in duration-200">
@@ -16,18 +24,24 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
         
         <div className="flex items-start space-x-3">
           <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <AlertCircle className="w-5 h-5" />
+            {isRateLimit ? <Clock className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           </div>
-          <div>
+          <div className="space-y-1">
             <h4 className="text-sm font-bold text-rose-900 dark:text-rose-200">
-              Processing Encountered an Issue
+              {isRateLimit ? 'Gemini API Rate Limit / Quota Exceeded' : 'Processing Encountered an Issue'}
             </h4>
-            <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5 leading-relaxed">
+            <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">
               {error}
             </p>
 
+            {isRateLimit && (
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 pt-0.5">
+                💡 <strong>Tip:</strong> Google AI Studio free tier limits requests to 15/minute. Wait ~20–30 seconds and click <em>Try Again</em>, or enter another free API key below.
+              </p>
+            )}
+
             {/* Action buttons */}
-            <div className="flex items-center space-x-3 mt-3">
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               {isKeyError && (
                 <button
                   type="button"
@@ -48,6 +62,18 @@ export default function ErrorAlert({ error, onRetry, onOpenApiKeyModal, onDismis
                   <RotateCcw className="w-3.5 h-3.5 mr-1" />
                   <span>Try Again</span>
                 </button>
+              )}
+
+              {isRateLimit && (
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-700 dark:text-rose-300 hover:underline"
+                >
+                  <span>Get New Free Key</span>
+                  <ExternalLink className="w-3 h-3 ml-0.5" />
+                </a>
               )}
             </div>
           </div>
