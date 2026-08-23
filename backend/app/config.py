@@ -1,7 +1,9 @@
 """Application configuration and settings."""
 
 import os
-from typing import List
+import json
+from typing import List, Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
@@ -12,12 +14,12 @@ class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
 
     # API Keys
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     # Document upload limits
-    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "25"))
-    MAX_FILE_SIZE_BYTES: int = MAX_FILE_SIZE_MB * 1024 * 1024
+    MAX_FILE_SIZE_MB: int = 25
+    MAX_FILE_SIZE_BYTES: int = 25 * 1024 * 1024
 
     # Supported file extensions
     ALLOWED_EXTENSIONS: List[str] = [
@@ -32,18 +34,31 @@ class Settings(BaseSettings):
     ]
 
     # OCR Settings
-    TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "")
+    TESSERACT_CMD: str = ""
 
     # Server settings
-    HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8000"))
-    CORS_ORIGINS: List[str] = [
-        origin.strip()
-        for origin in os.getenv(
-            "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,*"
-        ).split(",")
-        if origin.strip()
-    ]
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    CORS_ORIGINS: Union[List[str], str] = ["*"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS origins from comma-separated string, JSON list string, or list."""
+        if isinstance(v, str):
+            v_trimmed = v.strip()
+            if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
+                try:
+                    return json.loads(v_trimmed)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v_trimmed.split(",") if origin.strip()]
+        return v
+
+    @field_validator("MAX_FILE_SIZE_BYTES", mode="before")
+    @classmethod
+    def calculate_bytes(cls, v, values):
+        return v
 
     # Temp file directory
     TEMP_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "temp_uploads")
@@ -56,6 +71,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+# Recalculate bytes dynamically from MAX_FILE_SIZE_MB
+settings.MAX_FILE_SIZE_BYTES = settings.MAX_FILE_SIZE_MB * 1024 * 1024
 
 # Ensure temp directory exists
 os.makedirs(settings.TEMP_DIR, exist_ok=True)
