@@ -1,5 +1,8 @@
 import React from 'react';
-import { Compass, Bookmark } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { Compass } from 'lucide-react';
 
 export default function MainIdeasCard({ mainIdeas = [] }) {
   if (!mainIdeas || mainIdeas.length === 0) return null;
@@ -24,22 +27,29 @@ export default function MainIdeasCard({ mainIdeas = [] }) {
 
       {/* Sections Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
-        {mainIdeas.map((idea, index) => (
-          <div
-            key={index}
-            className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700/80 hover:shadow-xs transition-all duration-200 space-y-2"
-          >
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-violet-500" />
-              <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white truncate">
-                {idea.title}
-              </h4>
+        {mainIdeas.map((idea, index) => {
+          const rawTitle = String(idea.title || `Section ${index + 1}`).trim().replace(/^[*\-•]\s*/, '');
+          const desc = idea.description || idea.summary || '';
+
+          return (
+            <div
+              key={index}
+              className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700/80 hover:shadow-xs transition-all duration-200 space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white truncate">
+                  {rawTitle}
+                </h4>
+              </div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-4 [&>p]:inline [&>p]:leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  {desc}
+                </ReactMarkdown>
+              </div>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-4">
-              {idea.summary}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
     </div>

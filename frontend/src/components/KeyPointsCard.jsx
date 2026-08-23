@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { ListOrdered, Copy, Check } from 'lucide-react';
 
 export default function KeyPointsCard({ keyPoints = [] }) {
@@ -56,10 +59,14 @@ export default function KeyPointsCard({ keyPoints = [] }) {
         {keyPoints.map((point, index) => {
           const numStr = String(index + 1).padStart(2, '0');
           
+          // Clean leading bullets
+          let cleanStr = String(point || '').trim();
+          cleanStr = cleanStr.replace(/^[*\-•–—]\s*/, '').trim();
+
           // Check for category prefix (e.g. "PROBLEM: ...", "CONSTRAINT: ...")
           let category = null;
-          let textContent = point;
-          const colonMatch = point.match(/^([A-Z\s]{3,18}):\s*(.+)$/);
+          let textContent = cleanStr;
+          const colonMatch = cleanStr.match(/^([A-Z\s]{3,18}):\s*(.+)$/);
           if (colonMatch) {
             category = colonMatch[1].trim();
             textContent = colonMatch[2].trim();
@@ -74,15 +81,17 @@ export default function KeyPointsCard({ keyPoints = [] }) {
                 {numStr}
               </span>
               
-              <div className="flex-1 space-y-1">
+              <div className="flex-1 space-y-1 min-w-0">
                 {category && (
                   <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300 bg-brand-50/80 dark:bg-brand-950/60 px-2 py-0.5 rounded-md border border-brand-200/60 dark:border-brand-800/60 mr-2">
                     {category}
                   </span>
                 )}
-                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal inline">
-                  {textContent}
-                </p>
+                <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal inline-block [&>p]:inline [&>p]:leading-relaxed">
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {textContent}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           );

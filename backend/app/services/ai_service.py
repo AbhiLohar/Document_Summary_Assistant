@@ -546,11 +546,61 @@ Return ONLY a raw, valid, parseable JSON object matching this schema. No markdow
             )
         return ""
 
+    def _has_prompt_leakage(self, data: Dict[str, Any]) -> bool:
+        """Detect if the output contains internal instructions or prompt template echoes."""
+        leak_indicators = [
+            "document analyst",
+            "executive editor",
+            "untrusted_document_content",
+            "document content start",
+            "document content end",
+            "json schema",
+            "valid, parseable json",
+            "refining summary",
+            "refining key points",
+            "self-correction",
+            "final check of the json",
+            "summary: medium length",
+            "summary: short length",
+            "summary: long length",
+            "key takeaways: 3-",
+            "topic section 1",
+            "topic section 2",
+            "topic section 3",
+            "use category tags",
+            "return only valid structured json",
+        ]
+        
+        text_to_check = str(data.get("summary", "")).lower()
+        for kp in data.get("key_points", []):
+            text_to_check += " " + str(kp).lower()
+        for mi in data.get("main_ideas", []):
+            text_to_check += " " + str(mi.get("title", "")).lower() + " " + str(mi.get("summary", "")).lower()
+
+        return any(indicator in text_to_check for indicator in leak_indicators)
+
     def _single_pass_analysis(self, text: str, summary_length: SummaryLength, api_key: str) -> Dict[str, Any]:
-        """Run single-pass analysis with automatic model fallback."""
+        """Run single-pass analysis with automatic validation and single retry."""
         prompt = self._build_prompt(text, summary_length)
         raw_text = self._generate_with_fallback(prompt, api_key, json_mode=True)
-        return self._clean_and_parse_json(raw_text)
+        result = self._clean_and_parse_json(raw_text)
+
+        if self._has_prompt_leakage(result):
+            logger.warning("Prompt leakage or template language detected in AI response. Retrying once with strict instructions...")
+            retry_prompt = (
+                prompt + "\n\nCRITICAL RETRY REQUIREMENT:\n"
+                "Your previous attempt leaked prompt instructions or generic labels. "
+                "You must summarize ONLY the real document content. Do NOT output asterisks, template markers, or schema descriptions."
+            )
+            try:
+                retry_raw = self._generate_with_fallback(retry_prompt, api_key, json_mode=True)
+                retry_result = self._clean_and_parse_json(retry_raw)
+                if not self._has_prompt_leakage(retry_result):
+                    return retry_result
+            except Exception as e:
+                logger.warning(f"Retry generation failed: {e}")
+
+        return result
 
     def _map_reduce_analysis(self, text: str, summary_length: SummaryLength, api_key: str) -> Dict[str, Any]:
         """Hierarchical Map-Reduce summarization for large multi-page documents."""
@@ -604,28 +654,41 @@ COMBINED SECTION SUMMARIES:
         raw_text = self._generate_with_fallback(reduce_prompt, api_key, json_mode=True)
         return self._clean_and_parse_json(raw_text)
 
+    def _safe_json_loads(self, candidate_str: str) -> Optional[Dict[str, Any]]:
+        """Safely load JSON string, automatically repairing unescaped LaTeX backslashes if present."""
+        if not candidate_str or not candidate_str.strip():
+            return None
+        candidate = candidate_str.strip()
+        try:
+            res = json.loads(candidate)
+            if isinstance(res, dict):
+                return res
+        except Exception:
+            pass
+
+        # Repair invalid JSON escapes (like LaTeX \le, \times, \dots, \alpha, \sum)
+        repaired = re.sub(r'\\(?![/"\\bfnrtu])', r'\\\\', candidate)
+        try:
+            res = json.loads(repaired)
+            if isinstance(res, dict):
+                return res
+        except Exception:
+            pass
+        return None
+
     def _clean_and_parse_json(self, raw_text: str) -> Dict[str, Any]:
         """Safely parse JSON response from LLM, extracting from code fences or bracket patterns, stripping CoT scratchpad."""
         text = raw_text.strip()
 
-        parsed_dict: Optional[Dict[str, Any]] = None
-
-        # Step 1: Direct JSON parsing
-        try:
-            parsed_dict = json.loads(text)
-        except Exception:
-            pass
+        parsed_dict = self._safe_json_loads(text)
 
         # Step 2: Extract from markdown code fence (```json ... ``` or ``` ... ```)
         if not parsed_dict:
             code_blocks = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
             for block in reversed(code_blocks):
-                block = block.strip()
-                try:
-                    parsed_dict = json.loads(block)
+                parsed_dict = self._safe_json_loads(block)
+                if parsed_dict:
                     break
-                except Exception:
-                    pass
 
         # Step 3: Extract balanced JSON object starting specifically at {"summary" or {\s*"summary"
         if not parsed_dict:
@@ -652,11 +715,9 @@ COMBINED SECTION SUMMARIES:
                             depth -= 1
                             if depth == 0:
                                 candidate = text[start_idx:i + 1]
-                                try:
-                                    parsed_dict = json.loads(candidate)
+                                parsed_dict = self._safe_json_loads(candidate)
+                                if parsed_dict:
                                     break
-                                except Exception:
-                                    pass
                 if parsed_dict:
                     break
 
@@ -700,7 +761,7 @@ COMBINED SECTION SUMMARIES:
         return self._generate_extractive_fallback(text, SummaryLength.MEDIUM)
 
     def _sanitize_result(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Thoroughly sanitize AI output to remove prompt leaks, LaTeX formatting glitches, and generic placeholder text."""
+        """Thoroughly sanitize AI output to remove prompt leaks, internal template language, and normalize fields."""
         summary = str(data.get("summary", "")).strip()
 
         # Prompt leak detector terms
@@ -708,7 +769,10 @@ COMBINED SECTION SUMMARIES:
             "Document Analyst and Executive Editor",
             "You are a Document Analyst",
             "You are an expert Document",
+            "You are a document analysis engine",
             "UNTRUSTED_DOCUMENT_CONTENT",
+            "DOCUMENT CONTENT START",
+            "DOCUMENT CONTENT END",
             "JSON schema",
             "valid, parseable JSON",
             "Refining Summary:",
@@ -716,30 +780,34 @@ COMBINED SECTION SUMMARIES:
             "Refining Main Ideas:",
             "Self-Correction during JSON",
             "Final Check of the JSON",
+            "Summary: Medium length",
+            "Summary: Short length",
+            "Summary: Long length",
+            "Key Takeaways: 3-7",
+            "Key Takeaways: 3-8",
+            "Use category tags",
+            "Return ONLY valid structured JSON",
         ]
 
         for phrase in leak_phrases:
             summary = summary.replace(phrase, "")
 
-        # Clean LaTeX/Markdown anomalies like raw "$$"
-        summary = re.sub(r'\$\$(?!\w)', 'S', summary)
         summary = summary.strip()
 
         # Validate summary length and content
         if not summary or len(summary) < 20:
             summary = "Summary generated from document analysis."
 
-        # Sanitize key points
-        raw_points = data.get("key_points", [])
+        # Sanitize key takeaways / key points (support both key names)
+        raw_points = data.get("key_takeaways") or data.get("key_points") or []
         clean_points = []
         if isinstance(raw_points, list):
             for pt in raw_points:
                 pt_str = str(pt).strip()
                 for phrase in leak_phrases:
                     pt_str = pt_str.replace(phrase, "")
-                pt_str = re.sub(r'\$\$(?!\w)', 'S', pt_str)
-                # Strip markdown bolding in titles if garbled
-                pt_str = re.sub(r'^\*\s*', '', pt_str).strip()
+                # Strip leading literal bullets like "*", "-", "•"
+                pt_str = re.sub(r'^[*\-•–—]\s*', '', pt_str).strip()
                 if pt_str and len(pt_str) > 8 and not pt_str.lower().startswith("direct summary"):
                     clean_points.append(pt_str)
 
@@ -753,12 +821,14 @@ COMBINED SECTION SUMMARIES:
             for idea in raw_ideas:
                 if isinstance(idea, dict):
                     title = str(idea.get("title", "")).strip()
-                    desc = str(idea.get("summary", "")).strip()
+                    desc = str(idea.get("description") or idea.get("summary") or "").strip()
                     for phrase in leak_phrases:
                         title = title.replace(phrase, "")
                         desc = desc.replace(phrase, "")
-                    if title.lower() in ["general content", "section / topic title", ""]:
-                        title = "Key Section Analysis"
+                    title = re.sub(r'^[*\-•–—]\s*', '', title).strip()
+                    # Filter out generic placeholder titles like "Topic Section 1"
+                    if re.match(r'^Topic Section \d+$', title, re.IGNORECASE) or title.lower() in ["general content", "section / topic title", ""]:
+                        title = "Core Document Section"
                     if desc:
                         clean_ideas.append({"title": title, "summary": desc})
 
@@ -772,15 +842,13 @@ COMBINED SECTION SUMMARIES:
             for item in raw_sugg:
                 if isinstance(item, dict):
                     cat = str(item.get("category", "Clarity")).strip()
-                    sugg = str(item.get("suggestion", "")).strip()
-                    sev = str(item.get("severity", "low")).strip().lower()
+                    sugg = str(item.get("description") or item.get("suggestion") or "").strip()
+                    sev = str(item.get("severity", "medium")).strip().lower()
                     for phrase in leak_phrases:
                         sugg = sugg.replace(phrase, "")
+                    sugg = re.sub(r'^[*\-•–—]\s*', '', sugg).strip()
                     if sugg:
                         clean_sugg.append({"category": cat, "suggestion": sugg, "severity": sev})
-
-        if not clean_sugg:
-            clean_sugg = [{"category": "Readability", "suggestion": "No major improvements identified. The document is clearly written.", "severity": "low"}]
 
         return {
             "summary": summary,

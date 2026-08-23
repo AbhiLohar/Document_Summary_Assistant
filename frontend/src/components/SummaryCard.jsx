@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import {
   Sparkles,
   Copy,
@@ -119,9 +121,11 @@ export default function SummaryCard({ summary, summaryLength, isHierarchical }) 
         </div>
       )}
 
-      {/* Markdown Body with Editorial Typography */}
+      {/* Markdown Body with Editorial Typography & Safe Math Rendering */}
       <div className="prose-editorial pt-1">
-        <ReactMarkdown>{summary || 'No summary generated.'}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+          {summary || 'No summary generated.'}
+        </ReactMarkdown>
       </div>
 
     </div>
