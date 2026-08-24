@@ -104,12 +104,130 @@
   @apply bg-slate-950 text-slate-100 p-4 rounded-xl overflow-x-auto text-xs sm:text-sm my-4 font-mono border border-slate-800;
 }
 
+/* Dynamic Floating Background Animations for Landing Page */
+@keyframes floatDrift1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  33% {
+    transform: translate3d(15px, -24px, 0) rotate(-2deg);
+  }
+  66% {
+    transform: translate3d(-12px, -10px, 0) rotate(-9deg);
+  }
+}
+
+@keyframes floatDrift2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(8deg);
+  }
+  33% {
+    transform: translate3d(-18px, -28px, 0) rotate(12deg);
+  }
+  66% {
+    transform: translate3d(14px, -12px, 0) rotate(5deg);
+  }
+}
+
+@keyframes floatDrift3 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(4deg) scale(1);
+  }
+  50% {
+    transform: translate3d(20px, -35px, 0) rotate(-3deg) scale(1.03);
+  }
+}
+
+@keyframes floatDrift4 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-10deg);
+  }
+  50% {
+    transform: translate3d(-22px, -30px, 0) rotate(-4deg);
+  }
+}
+
+@keyframes floatPulseBlock {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(15deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(10px, -20px, 0) rotate(22deg);
+    opacity: 0.95;
+  }
+}
+
+@keyframes floatOrb1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(40px, -45px, 0) scale(1.1);
+  }
+}
+
+@keyframes floatOrb2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-35px, 40px, 0) scale(0.95);
+  }
+}
+
+.animate-float-drift-1 {
+  animation: floatDrift1 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-drift-2 {
+  animation: floatDrift2 18s ease-in-out infinite;
+  animation-delay: 1.5s;
+  will-change: transform;
+}
+
+.animate-float-drift-3 {
+  animation: floatDrift3 16s ease-in-out infinite;
+  animation-delay: 3s;
+  will-change: transform;
+}
+
+.animate-float-drift-4 {
+  animation: floatDrift4 20s ease-in-out infinite;
+  animation-delay: 2s;
+  will-change: transform;
+}
+
+.animate-float-block {
+  animation: floatPulseBlock 10s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-float-orb-1 {
+  animation: floatOrb1 15s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-orb-2 {
+  animation: floatOrb2 19s ease-in-out infinite;
+  animation-delay: 2.5s;
+  will-change: transform;
+}
+
 /* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   .animate-float-slow,
   .animate-float-medium,
   .animate-scanline,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-float-drift-1,
+  .animate-float-drift-2,
+  .animate-float-drift-3,
+  .animate-float-drift-4,
+  .animate-float-block,
+  .animate-float-orb-1,
+  .animate-float-orb-2 {
     animation: none !important;
     transform: none !important;
   }

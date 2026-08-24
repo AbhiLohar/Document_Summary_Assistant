@@ -300,7 +300,7 @@ Next Steps:
     <div className="min-h-screen flex flex-col bg-[#f8f9fc] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 transition-colors duration-200 bg-mesh-grid relative">
       
       {/* Background artwork & ambient vectors */}
-      <BackgroundArtwork />
+      <BackgroundArtwork isFrontPage={currentStage === 'idle' || currentStage === 'error'} />
 
       {/* Navigation Header */}
       <Header
