@@ -1091,9 +1091,12 @@ COMBINED SECTION SUMMARIES:
         for i, p in enumerate(paragraphs[:4]):
             p_sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", p) if len(s.strip()) > 10]
             if p_sentences:
-                title = f"Topic Section {i + 1}"
-                if len(p_sentences[0]) < 60:
-                    title = p_sentences[0].rstrip(".")
+                first_sent = p_sentences[0].rstrip(".")
+                words = first_sent.split()
+                if len(words) <= 6:
+                    title = first_sent
+                else:
+                    title = " ".join(words[:5])
                 main_ideas.append({
                     "title": title,
                     "summary": p_sentences[0] if len(p_sentences) == 1 else " ".join(p_sentences[:2])

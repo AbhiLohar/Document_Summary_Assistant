@@ -127,3 +127,44 @@ def test_user_image_decontamination_all_modes():
         assert not mi["title"].startswith("Task:")
         assert not mi["title"].startswith("Topic Section")
 
+
+def test_summary_lengths_distinct_behavior():
+    """Verify that short, medium, and long modes provide distinct prompt instructions and extractive sentence lengths."""
+    # 1. Check prompt instructions for each mode
+    instr_short = ai_service._get_length_instructions(SummaryLength.SHORT, 500)
+    instr_med = ai_service._get_length_instructions(SummaryLength.MEDIUM, 500)
+    instr_long = ai_service._get_length_instructions(SummaryLength.LONG, 500)
+
+    assert "executive overview" in instr_short.lower() or "concise" in instr_short.lower()
+    assert "focused" in instr_med.lower() or "1 to 2" in instr_med.lower()
+    assert "comprehensive" in instr_long.lower() or "detailed" in instr_long.lower()
+    assert instr_short != instr_med != instr_long
+
+    # 2. Check extractive fallback lengths
+    sample_text = (
+        "Machine learning algorithms build a model based on sample data, known as training data. "
+        "These models make predictions or decisions without being explicitly programmed to do so. "
+        "Machine learning is closely related to computational statistics, which focuses on making predictions using computers. "
+        "The study of mathematical optimization delivers methods, theory and application domains to the field of machine learning. "
+        "Data mining is a related field of study, focusing on exploratory data analysis through unsupervised learning. "
+        "Some implementations of machine learning use data and neural networks in a way that mimics the working of a biological brain. "
+        "In its application across business problems, machine learning is also referred to as predictive analytics. "
+        "Supervised learning algorithms are trained using labeled examples, such as an input where the desired output is known. "
+        "Unsupervised learning is used against data that has no historical labels. "
+        "The system is not told the right answer, but rather must figure out what is being shown."
+    )
+
+    res_short = ai_service._generate_extractive_fallback(sample_text, SummaryLength.SHORT)
+    res_med = ai_service._generate_extractive_fallback(sample_text, SummaryLength.MEDIUM)
+    res_long = ai_service._generate_extractive_fallback(sample_text, SummaryLength.LONG)
+
+    # Word counts must strictly increase: SHORT < MEDIUM < LONG
+    words_short = len(res_short["summary"].split())
+    words_med = len(res_med["summary"].split())
+    words_long = len(res_long["summary"].split())
+
+    assert words_short < words_med <= words_long
+    assert len(res_short["main_ideas"]) > 0
+    assert not any("Topic Section" in mi["title"] for mi in res_short["main_ideas"])
+
+
